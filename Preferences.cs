@@ -1,5 +1,5 @@
 using System.Text.Json;
-using DotNative.Paths;
+using DotNative.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -22,10 +22,27 @@ public sealed class FilePreferences : IPreferences
     public FilePreferences(string applicationId, PresentationTarget? target = null)
     {
         PlatformGuard.Desktop(target ?? PresentationTarget.Local);
-        path = Path.Combine(
-            new ApplicationPaths(applicationId, target).Get(PathKind.ApplicationData),
-            "preferences.json"
-        );
+        applicationId = PlatformGuard.Namespace(applicationId);
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var directory =
+            OperatingSystem.IsMacOS()
+                ? Path.Combine(home, "Library", "Application Support", applicationId)
+            : OperatingSystem.IsLinux()
+                ? Path.Combine(
+                    Environment.GetEnvironmentVariable("XDG_DATA_HOME") is { Length: > 0 } xdg
+                    && Path.IsPathFullyQualified(xdg)
+                        ? xdg
+                        : Path.Combine(home, ".local", "share"),
+                    applicationId
+                )
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                applicationId
+            );
+        if (string.IsNullOrEmpty(home) || !Path.IsPathFullyQualified(directory))
+            throw new DirectoryNotFoundException("Application data directory is unavailable.");
+        Directory.CreateDirectory(directory);
+        path = Path.Combine(directory, "preferences.json");
     }
 
     public Task<T> GetAsync<T>(
@@ -250,10 +267,13 @@ public static class PreferencesServices
         string applicationId
     )
     {
-        services.TryAddSingleton<IPreferences>(p => new FilePreferences(
-            applicationId,
-            p.GetService<PresentationTarget>()
-        ));
+        services.TryAddSingleton<IPreferences>(p =>
+            (p.GetService<PresentationTarget>() ?? PresentationTarget.Local).Platform
+                is NativePlatform.IOS
+                    or NativePlatform.Android
+                ? new ChannelPreferences(p.GetRequiredService<IPlatformChannels>(), applicationId)
+                : new FilePreferences(applicationId, p.GetService<PresentationTarget>())
+        );
         return services;
     }
 }

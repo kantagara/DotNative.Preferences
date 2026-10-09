@@ -1,6 +1,6 @@
 # DotNative.Preferences
 
-Typed app-scoped preferences for macOS, Windows and Linux, with one managed API across the five planned DotNative platforms. Android/iOS currently throw `PlatformNotSupportedException` because native app preference stores are not connected yet.
+Typed app-scoped preferences for Android, iOS, macOS, Windows and Linux. Mobile uses native channels backed by SharedPreferences on Android and UserDefaults on iOS; desktop keeps atomic file storage. Keys are isolated by application ID. These stores are for settings, not secrets.
 
 ```csharp
 builder.Services.AddPreferences("com.example.myapp");

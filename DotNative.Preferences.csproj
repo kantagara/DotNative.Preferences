@@ -8,9 +8,10 @@
     <Nullable>enable</Nullable>
     <IsAotCompatible>true</IsAotCompatible>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.1.0-preview.1</Version>
+    <Version>0.1.0-preview.2</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <DotNativePluginKind>Managed</DotNativePluginKind>
+    <DotNativePluginKind>Native</DotNativePluginKind>
+    <DotNativePluginEntry>PreferencesPlugin</DotNativePluginEntry>
     <DotNativeSourceRoot Condition="'$(DotNativeSourceRoot)' == ''"
       >../dotNative</DotNativeSourceRoot>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -28,17 +29,7 @@
     <None Remove="README.md" />
     <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference
-      Include="../DotNative.Paths/DotNative.Paths.csproj"
-      Condition="Exists('../DotNative.Paths/DotNative.Paths.csproj')"
-    />
-    <PackageReference
-      Include="DotNative.Paths"
-      Version="0.1.0-preview.1"
-      Condition="!Exists('../DotNative.Paths/DotNative.Paths.csproj')"
-    />
-  </ItemGroup>
+
   <ItemGroup>
     <None Remove="LICENSE" />
     <None Include="LICENSE" Pack="true" PackagePath="LICENSE" />
