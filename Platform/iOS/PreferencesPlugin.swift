@@ -8,8 +8,9 @@ import Foundation
     for method in ["get", "set", "contains", "remove", "clear"] {
       channel.handle(method) { args, reply in
         let fields = args.fields
-        guard let app = fields["applicationId"]?.string,
-          app.range(of: "^[A-Za-z0-9_.-]{1,128}$", options: .regularExpression) != nil,
+        let provided = fields["applicationId"]?.string
+        let app = (provided?.isEmpty == false ? provided : nil) ?? Bundle.main.bundleIdentifier
+        guard let app, app.range(of: "^[A-Za-z0-9_.-]{1,128}$", options: .regularExpression) != nil,
           let defaults = UserDefaults(suiteName: "dotnative.preferences." + app)
         else {
           reply.failure("invalid_arguments", "Invalid preference namespace")

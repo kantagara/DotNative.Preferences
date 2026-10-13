@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using DotNative.Plugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -260,20 +261,59 @@ public sealed class FilePreferences : IPreferences
     }
 }
 
+/// <summary>Creates storage for the supplied application target. No service registration is required.</summary>
+public static class Preferences
+{
+    public static IPreferences Create(
+        IPlatformChannels? channels,
+        PresentationTarget target,
+        string? applicationId = null
+    )
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        return target.Platform is NativePlatform.IOS or NativePlatform.Android
+            ? new ChannelPreferences(
+                channels ?? throw new ArgumentNullException(nameof(channels)),
+                applicationId
+            )
+            : new FilePreferences(applicationId ?? DesktopName(), target);
+    }
+
+    private static string DesktopName()
+    {
+        var name = Assembly.GetEntryAssembly()?.GetName().Name;
+        if (string.IsNullOrWhiteSpace(name))
+            throw new InvalidOperationException(
+                "Desktop preferences need an application name. Pass it to Preferences.Create."
+            );
+        return name;
+    }
+}
+
 public static class PreferencesServices
 {
+    public static IServiceCollection AddPreferences(this IServiceCollection services) =>
+        services.AddPreferencesCore(null);
+
     public static IServiceCollection AddPreferences(
         this IServiceCollection services,
         string applicationId
+    ) => services.AddPreferencesCore(applicationId);
+
+    private static IServiceCollection AddPreferencesCore(
+        this IServiceCollection services,
+        string? applicationId
     )
     {
-        services.TryAddSingleton<IPreferences>(p =>
-            (p.GetService<PresentationTarget>() ?? PresentationTarget.Local).Platform
-                is NativePlatform.IOS
-                    or NativePlatform.Android
-                ? new ChannelPreferences(p.GetRequiredService<IPlatformChannels>(), applicationId)
-                : new FilePreferences(applicationId, p.GetService<PresentationTarget>())
-        );
+        services.TryAddSingleton<IPreferences>(provider =>
+        {
+            var target = provider.GetService<PresentationTarget>() ?? PresentationTarget.Local;
+            return Preferences.Create(
+                provider.GetService<IPlatformChannels>(),
+                target,
+                applicationId
+            );
+        });
         return services;
     }
 }

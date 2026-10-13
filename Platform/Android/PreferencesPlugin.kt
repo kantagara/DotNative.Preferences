@@ -10,8 +10,9 @@ class PreferencesPlugin(activity: Activity) {
         for (method in listOf("get", "set", "contains", "remove", "clear")) {
             channel.handle(method) { args, reply ->
                 val fields = args as? Map<*, *>
-                val app = fields?.get("applicationId") as? String
-                if (app == null || !app.matches(Regex("[A-Za-z0-9_.-]{1,128}"))) {
+                val provided = fields?.get("applicationId") as? String
+                val app = provided?.takeIf { it.isNotEmpty() } ?: activity.packageName
+                if (!app.matches(Regex("[A-Za-z0-9_.-]{1,128}"))) {
                     reply.failure("invalid_arguments", "Invalid preference namespace")
                 } else {
                     val preferences =

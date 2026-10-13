@@ -2,10 +2,12 @@ using DotNative.Plugins;
 
 namespace DotNative.Preferences;
 
-internal sealed class ChannelPreferences(IPlatformChannels channels, string applicationId)
+internal sealed class ChannelPreferences(IPlatformChannels channels, string? applicationId)
     : IPreferences
 {
-    private readonly string applicationId = PlatformGuard.Namespace(applicationId);
+    private readonly string? applicationId = applicationId is null
+        ? null
+        : PlatformGuard.Namespace(applicationId);
     private readonly MethodChannel channel = channels.Get("dotnative.preferences");
 
     private Task<object?> Invoke(string method, string? key, object? value, CancellationToken token)
@@ -15,16 +17,10 @@ internal sealed class ChannelPreferences(IPlatformChannels channels, string appl
             && (string.IsNullOrWhiteSpace(key) || key.Length > 1024 || key.Contains('\0'))
         )
             throw new ArgumentException("Invalid preference key.", nameof(key));
-        return channel.InvokeAsync(
-            method,
-            new Dictionary<string, object?>
-            {
-                ["applicationId"] = applicationId,
-                ["key"] = key,
-                ["value"] = value,
-            },
-            token
-        );
+        var arguments = new Dictionary<string, object?> { ["key"] = key, ["value"] = value };
+        if (applicationId is not null)
+            arguments["applicationId"] = applicationId;
+        return channel.InvokeAsync(method, arguments, token);
     }
 
     public async Task<T> GetAsync<T>(

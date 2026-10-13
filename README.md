@@ -3,8 +3,7 @@
 Typed app-scoped preferences for Android, iOS, macOS, Windows and Linux. Mobile uses native channels backed by SharedPreferences on Android and UserDefaults on iOS; desktop keeps atomic file storage. Keys are isolated by application ID. These stores are for settings, not secrets.
 
 ```csharp
-builder.Services.AddPreferences("com.example.myapp");
-var preferences = provider.Preferences;
+var preferences = Preferences.Create(channels, target);
 await preferences.SetAsync("theme", "dark", cancellationToken);
 var theme = await preferences.GetAsync("theme", "system", cancellationToken);
 ```
@@ -14,6 +13,15 @@ Supported values are `string`, `bool`, `int`, `long`, finite `double` and `strin
 Desktop storage is a versionable UTF-8 JSON file under the app's application-data directory. A cross-process exclusive lock and write-to-temp/rename prevent lost concurrent updates and partial files. The file has a 4 MiB limit. Preferences are ordinary data and **are not encrypted**; put credentials in SecureStorage. Rapid calls serialize for consistent read/modify/write behavior.
 
 Build locally: `dotnet build -p:DotNativeSourceRoot=../dotNative`. macOS, Windows 11 ARM64, and Linux ARM64 (Debian 12 container) passed typed roundtrip and concurrent access checks.
+
+## Direct use
+
+`Preferences.Create(channels, target, applicationId: null)` creates the correct
+implementation without DI registration. Keep the instance in the class that uses
+it. Pass the active host's `IPlatformChannels` and `PresentationTarget`; no global
+host is retained. Native storage defaults to the application namespace. Desktop
+storage uses the entry assembly name unless an explicit application ID is supplied.
+Desktop callers may pass null channels. Existing `AddPreferences` registration remains optional.
 
 ## Service access
 
