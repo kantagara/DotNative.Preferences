@@ -50,3 +50,18 @@ selects the property; the `#else` branch selects the method.
 
 Build and pack both targets with .NET 10 SDK. A source build using .NET 9 SDK
 builds only `net9.0`; it does not produce the .NET 10 assembly.
+
+## v0.1.0-preview.3 validation
+
+Android handlers reject missing/non-map arguments before accessing fields. The NuGet
+asset now includes Android/iOS sources and buildTransitive registration rules.
+
+```sh
+dotnet run --project tests/Managed -f net10.0
+DOTNET_ROLL_FORWARD=Major dotnet run --project tests/Managed -f net9.0
+ANDROID_HOME=/path/to/android/sdk bash tests/native/android/gradlew -p tests/native/android connectedDebugAndroidTest
+```
+
+The Android test uses real SharedPreferences with a channel/codec fixture; it checks
+malformed arguments, reopen persistence, namespace isolation and removal. It is not
+a complete host transport or application E2E test.

@@ -2,3 +2,8 @@ bin/
 obj/
 artifacts/
 *.nupkg
+
+.gradle/
+local.properties
+
+/tests/native/android/**/build/

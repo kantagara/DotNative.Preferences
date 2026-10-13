@@ -9,8 +9,11 @@ class PreferencesPlugin(activity: Activity) {
         val channel = NativeChannels.channel("dotnative.preferences")
         for (method in listOf("get", "set", "contains", "remove", "clear")) {
             channel.handle(method) { args, reply ->
-                val fields = args as? Map<*, *>
-                val provided = fields?.get("applicationId") as? String
+                val fields = args as? Map<*, *> ?: run {
+                    reply.failure("invalid_arguments", "Expected preference arguments")
+                    return@handle
+                }
+                val provided = fields["applicationId"] as? String
                 val app = provided?.takeIf { it.isNotEmpty() } ?: activity.packageName
                 if (!app.matches(Regex("[A-Za-z0-9_.-]{1,128}"))) {
                     reply.failure("invalid_arguments", "Invalid preference namespace")

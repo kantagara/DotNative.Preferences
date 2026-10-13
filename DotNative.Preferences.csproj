@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <IsAotCompatible>true</IsAotCompatible>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.1.0-preview.2</Version>
+    <Version>0.1.0-preview.3</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <DotNativePluginKind>Native</DotNativePluginKind>
     <DotNativePluginEntry>PreferencesPlugin</DotNativePluginEntry>
@@ -17,6 +17,10 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Platform/**/*;buildTransitive/**/*" />
+    <None Include="Platform/**/*;buildTransitive/**/*" Pack="true" PackagePath="%(Identity)" />
+    <Compile Remove="tests/**" />
+    <None Remove="tests/**" />
     <ProjectReference
       Include="$(DotNativeSourceRoot)/src/DotNative/DotNative.csproj"
       Condition="Exists('$(DotNativeSourceRoot)/src/DotNative/DotNative.csproj')"
